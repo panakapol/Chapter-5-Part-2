@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สรุปละเอียด Ch.5 Part 2 — ANOVA & Chi-Square</title>
+<style>
+:root{
+  --bg:#f7f5f2; --bg-card:#ffffff; --bg-soft:#eef1f6;
+  --text:#1f2430; --text-soft:#5a6272;
+  --accent:#6b5bd6; --accent-2:#e8873f; --accent-3:#3fa796;
+  --border:#e2e2ea;
+  --correct:#1f9d55; --correct-bg:#e6f8ee;
+  --wrong:#d64545; --wrong-bg:#fdeaea;
+  --code-bg:#f0eefb;
+  --shadow:0 4px 18px rgba(30,20,60,0.08);
+  --step-num-bg:#6b5bd6;
+}
+:root[data-theme="dark"]{
+  --bg:#15161c; --bg-card:#1e2029; --bg-soft:#242634;
+  --text:#eef0f6; --text-soft:#a3a8ba;
+  --accent:#9b8cff; --accent-2:#ffab66; --accent-3:#5fd6c0;
+  --border:#31333f;
+  --correct:#4ade80; --correct-bg:#123722;
+  --wrong:#f87171; --wrong-bg:#3a1b1b;
+  --code-bg:#262840;
+  --shadow:0 4px 20px rgba(0,0,0,0.4);
+  --step-num-bg:#9b8cff;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:"Sarabun","Noto Sans Thai","Segoe UI",sans-serif;background:var(--bg);color:var(--text);line-height:1.65;padding-bottom:70px;}
+header.top{position:sticky;top:0;z-index:50;background:var(--bg-card);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow);}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand .dot{width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));}
+.brand h1{font-size:1.05rem;margin:0;font-weight:700;}
+.brand span.sub{display:block;font-size:.75rem;color:var(--text-soft);font-weight:400;}
+.theme-toggle{border:1px solid var(--border);background:var(--bg-soft);color:var(--text);padding:8px 14px;border-radius:999px;cursor:pointer;font-size:.85rem;display:flex;align-items:center;gap:6px;}
+.theme-toggle:hover{border-color:var(--accent);}
+.container{max-width:960px;margin:0 auto;padding:0 18px;}
+.exam-banner{margin:20px 0;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-3) 100%);color:#fff;border-radius:16px;padding:18px 22px;box-shadow:var(--shadow);}
+.exam-banner h2{margin:0 0 6px;font-size:1.1rem;}
+.exam-banner ul{margin:6px 0 0;padding-left:20px;font-size:.9rem;opacity:.95;}
+.tabs{display:flex;gap:8px;margin:22px 0 6px;flex-wrap:wrap;position:sticky;top:66px;z-index:40;background:var(--bg);padding:8px 0;}
+.tab-btn{border:1px solid var(--border);background:var(--bg-card);color:var(--text-soft);padding:9px 15px;border-radius:12px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .15s;}
+.tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.tab-btn:hover:not(.active){border-color:var(--accent);color:var(--text);}
+.subtabs{display:flex;gap:8px;margin:6px 0 16px;flex-wrap:wrap;}
+.subtab-btn{border:1px solid var(--border);background:var(--bg-soft);color:var(--text-soft);padding:7px 13px;border-radius:10px;cursor:pointer;font-size:.8rem;font-weight:600;}
+.subtab-btn.active{background:var(--accent-2);color:#fff;border-color:var(--accent-2);}
+.panel{display:none;animation:fade .25s ease;}
+.panel.active{display:block;}
+.subpanel{display:none;}
+.subpanel.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin:16px 0;box-shadow:var(--shadow);}
+.card h3{margin-top:0;color:var(--accent);font-size:1.05rem;display:flex;align-items:center;gap:8px;}
+.card h4{color:var(--accent-2);font-size:.95rem;margin-bottom:6px;}
+.pill{display:inline-block;font-size:.72rem;background:var(--bg-soft);color:var(--text-soft);border-radius:999px;padding:2px 10px;margin-bottom:8px;font-weight:600;}
+.formula{background:var(--code-bg);border-radius:10px;padding:12px 16px;font-family:"Cambria Math",Georgia,serif;font-size:1rem;margin:10px 0;overflow-x:auto;border-left:4px solid var(--accent);}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.85rem;}
+th,td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+th{background:var(--bg-soft);color:var(--text);}
+ul.tight{margin:6px 0;padding-left:20px;}
+ul.tight li{margin-bottom:4px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media (max-width:640px){.two-col{grid-template-columns:1fr;} table{font-size:.75rem;}}
+.note{background:var(--bg-soft);border-left:4px solid var(--accent-3);padding:10px 14px;border-radius:8px;font-size:.87rem;color:var(--text-soft);margin:10px 0;}
+.warn{background:var(--wrong-bg);border-left:4px solid var(--wrong);padding:10px 14px;border-radius:8px;font-size:.87rem;margin:10px 0;}
+
+/* step-by-step calc blocks */
+.steps{margin:14px 0;}
+.step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
+.step-num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--step-num-bg);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;}
+.step-body{flex:1;background:var(--bg-soft);border-radius:10px;padding:10px 14px;}
+.step-body b.result{color:var(--accent-3);}
+
+svg{max-width:100%;height:auto;display:block;margin:14px auto;}
+figcaption{text-align:center;font-size:.8rem;color:var(--text-soft);margin-top:-6px;}
+
+/* Quiz */
+.quiz-q{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin:14px 0;box-shadow:var(--shadow);}
+.quiz-q .qtext{font-weight:700;margin-bottom:10px;}
+.opt{display:block;width:100%;text-align:left;padding:10px 14px;margin:6px 0;border-radius:10px;border:1px solid var(--border);background:var(--bg-soft);color:var(--text);cursor:pointer;font-size:.87rem;transition:.15s;}
+.opt:hover{border-color:var(--accent);}
+.opt.selected{border-color:var(--accent);background:var(--code-bg);}
+.opt.correct{border-color:var(--correct);background:var(--correct-bg);color:var(--correct);font-weight:700;}
+.opt.wrong{border-color:var(--wrong);background:var(--wrong-bg);color:var(--wrong);font-weight:700;}
+.explain{margin-top:10px;font-size:.84rem;color:var(--text-soft);background:var(--bg-soft);padding:10px 12px;border-radius:8px;display:none;}
+.quiz-controls{display:flex;gap:10px;align-items:center;margin:16px 0;flex-wrap:wrap;}
+button.primary{background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:999px;cursor:pointer;font-weight:700;font-size:.87rem;}
+button.primary:hover{opacity:.9;}
+button.ghost{background:transparent;border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:999px;cursor:pointer;font-size:.87rem;}
+.score-box{font-weight:700;font-size:.95rem;padding:7px 15px;border-radius:999px;background:var(--bg-soft);}
+.quiz-set-title{margin:10px 0 4px;font-size:1rem;font-weight:800;color:var(--accent);}
+.quiz-set-desc{font-size:.85rem;color:var(--text-soft);margin-bottom:14px;}
+footer{text-align:center;color:var(--text-soft);font-size:.8rem;margin-top:40px;}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.78rem;color:var(--text-soft);margin:6px 0;}
+.legend span{display:flex;align-items:center;gap:5px;}
+.swatch{width:12px;height:12px;border-radius:3px;display:inline-block;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="dot"></div>
+    <div>
+      <h1>สรุปละเอียด Chapter 5 — Part 2</h1>
+      <span class="sub">ANOVA & Chi-Square Test · พร้อมภาพประกอบ + วิธีคำนวณทีละขั้น + ข้อสอบแบ่งชุด</span>
+    </div>
+  </div>
+  <button class="theme-toggle" id="themeToggle">🌙 <span id="themeLabel">โหมดมืด</span></button>
+</header>
+
+<div class="container">
+
+  <div class="exam-banner">
+    <h2>📋 คำชี้แจงข้อสอบ Test 2</h2>
+    <ul>
+      <li>เนื้อหา: บทที่ 5 Part 2 — การทดสอบ ANOVA และการทดสอบ Chi-Square</li>
+      <li>รูปแบบ: Multiple choice จำนวน 35 ข้อ ผ่าน Google Form</li>
+      <li>เตรียมอุปกรณ์ + log-in อีเมลให้พร้อมก่อนเริ่มสอบ</li>
+    </ul>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="anova-theory">📊 ANOVA ทฤษฎี</button>
+    <button class="tab-btn" data-tab="anova-example">🧮 ANOVA ตัวอย่างละเอียด</button>
+    <button class="tab-btn" data-tab="chi-theory">🔲 Chi-Square ทฤษฎี</button>
+    <button class="tab-btn" data-tab="chi-example">🧮 Chi-Square ตัวอย่างละเอียด</button>
+    <button class="tab-btn" data-tab="quiz">✏️ ข้อสอบ (แบ่งชุด)</button>
+  </div>
+
+  <!-- ================= ANOVA THEORY ================= -->
+  <div class="panel active" id="panel-anova-theory">
+
+    <div class="card">
+      <h3>🎯 ANOVA คืออะไร ใช้เมื่อไหร่</h3>
+      <p>ใช้ทดสอบว่า <b>ค่าเฉลี่ยของประชากรตั้งแต่ 3 กลุ่มขึ้นไป</b> ที่เป็นอิสระต่อกันแตกต่างกันหรือไม่ โดยตัวแปรตาม (สิ่งที่วัด) เป็น<b>เชิงปริมาณ</b> และตัวแปรอิสระ (ตัวจำแนกกลุ่ม) เป็น<b>เชิงจำแนก</b></p>
+
+      <svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          .lbl{font-size:13px; fill:var(--text); font-family:Sarabun,sans-serif;}
+          .lblsmall{font-size:11px; fill:var(--text-soft); font-family:Sarabun,sans-serif;}
+        </style>
+        <text x="380" y="20" text-anchor="middle" class="lbl" font-weight="700">ตัวอย่าง: เปรียบเทียบวิธีสอน 3 วิธี ต่อคะแนนสอบ</text>
+        <g>
+          <rect x="20" y="45" width="150" height="120" rx="10" fill="none" stroke="var(--accent)" stroke-width="2"/>
+          <text x="95" y="65" text-anchor="middle" class="lbl" font-weight="700">วิธีที่ 1</text>
+          <text x="95" y="90" text-anchor="middle" class="lblsmall">คะแนน: 78,82,75,80</text>
+          <text x="95" y="108" text-anchor="middle" class="lblsmall" fill="var(--accent-3)" font-weight="700">X̄₁ = 78.75</text>
+        </g>
+        <g>
+          <rect x="200" y="45" width="150" height="120" rx="10" fill="none" stroke="var(--accent-2)" stroke-width="2"/>
+          <text x="275" y="65" text-anchor="middle" class="lbl" font-weight="700">วิธีที่ 2</text>
+          <text x="275" y="90" text-anchor="middle" class="lblsmall">คะแนน: 85,88,90,84</text>
+          <text x="275" y="108" text-anchor="middle" class="lblsmall" fill="var(--accent-3)" font-weight="700">X̄₂ = 86.75</text>
+        </g>
+        <g>
+          <rect x="380" y="45" width="150" height="120" rx="10" fill="none" stroke="var(--accent-3)" stroke-width="2"/>
+          <text x="455" y="65" text-anchor="middle" class="lbl" font-weight="700">วิธีที่ 3</text>
+          <text x="455" y="90" text-anchor="middle" class="lblsmall">คะแนน: 70,72,68,74</text>
+          <text x="455" y="108" text-anchor="middle" class="lblsmall" fill="var(--accent-3)" font-weight="700">X̄₃ = 71.00</text>
+        </g>
+        <g>
+          <text x="640" y="90" text-anchor="middle" class="lbl" font-weight="700">คำถาม:</text>
+          <text x="640" y="112" text-anchor="middle" class="lblsmall">ค่าเฉลี่ยทั้ง 3</text>
+          <text x="640" y="128" text-anchor="middle" class="lblsmall">วิธีต่างกันจริง</text>
+          <text x="640" y="144" text-anchor="middle" class="lblsmall">หรือแค่บังเอิญ?</text>
+        </g>
+        <line x1="560" y1="105" x2="595" y2="105" stroke="var(--text-soft)" stroke-width="2" marker-end="url(#arrow1)"/>
+        <defs><marker id="arrow1" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--text-soft)"/></marker></defs>
+        <text x="380" y="190" text-anchor="middle" class="lblsmall">ANOVA เปรียบเทียบ "ความผันแปรระหว่างกลุ่ม" กับ "ความผันแปรภายในกลุ่ม" เพื่อตอบคำถามนี้</text>
+      </svg>
+      <figcaption>รูปที่ 1: แนวคิดของ One-way ANOVA — เปรียบเทียบค่าเฉลี่ยของหลายกลุ่ม</figcaption>
+    </div>
+
+    <div class="card">
+      <h3>📐 ข้อตกลงเบื้องต้น (Assumptions)</h3>
+      <ul class="tight">
+        <li>ตัวอย่างแต่ละกลุ่มถูกสุ่มมาจากประชากรที่ <b>เป็นอิสระกัน</b></li>
+        <li>ตัวอย่างทุกกลุ่มมาจากประชากรที่มี<b>การแจกแจงแบบปรกติ</b></li>
+        <li>ตัวอย่างทุกกลุ่มมาจากประชากรที่มี<b>ความแปรปรวนไม่ต่างกัน (เท่ากัน)</b></li>
+      </ul>
+      <div class="two-col">
+        <div class="note"><b>ทดสอบการแจกแจงปรกติ:</b><br>Kolmogorov–Smirnov (n &gt; 50)<br>Shapiro–Wilk (n ≤ 50)<br><i>H₀: ข้อมูลแจกแจงแบบปรกติ</i></div>
+        <div class="note"><b>ทดสอบความแปรปรวนเท่ากัน:</b><br>Levene's test<br><i>H₀: ทุกกลุ่มมีความแปรปรวนเท่ากัน</i></div>
+      </div>
+      <div class="warn">ถ้า p-value ของทั้งสองการทดสอบข้างต้น &gt; α (0.05) แปลว่า <b>ไม่ปฏิเสธ H₀</b> → ข้อมูลเป็นไปตามข้อตกลง → ใช้ One-way ANOVA ได้เลย</div>
+    </div>
+
+    <div class="card">
+      <h3>🧮 สมมติฐานและตัวสถิติทดสอบ</h3>
+      <div class="formula">H₀ : μ₁ = μ₂ = μ₃ = ... = μₖ<br>H₁ : μᵢ อย่างน้อย 2 ค่า ไม่เท่ากัน , i = 1,2,...,k</div>
+      <div class="formula">F = MSTr / MSE &nbsp;~&nbsp; f₍k−1, n−k₎</div>
+
+      <h4>โครงสร้างตาราง ANOVA</h4>
+      <table>
+        <tr><th>แหล่งความผันแปร</th><th>df</th><th>SS</th><th>MS</th><th>F</th></tr>
+        <tr><td>สิ่งทดลอง (Treatment)</td><td>k − 1</td><td>SSTr</td><td>MSTr = SSTr/(k−1)</td><td rowspan="2">F = MSTr/MSE</td></tr>
+        <tr><td>ความคลาดเคลื่อน (Error)</td><td>n − k</td><td>SSE</td><td>MSE = SSE/(n−k)</td></tr>
+        <tr><td>รวม (Total)</td><td>n − 1</td><td>SST</td><td>—</td><td>—</td></tr>
+      </table>
+
+      <svg viewBox="0 0 600 170" xmlns="http://www.w3.org/2000/svg">
+        <style>.t{font-size:14px;fill:var(--text);font-family:Sarabun,sans-serif;font-weight:700;} .s{font-size:11px;fill:var(--text-soft);font-family:Sarabun,sans-serif;}</style>
+        <rect x="220" y="15" width="160" height="45" rx="10" fill="var(--code-bg)" stroke="var(--accent)" stroke-width="2"/>
+        <text x="300" y="42" text-anchor="middle" class="t">SST (รวม)</text>
+        <line x1="300" y1="60" x2="220" y2="95" stroke="var(--text-soft)" stroke-width="2"/>
+        <line x1="300" y1="60" x2="380" y2="95" stroke="var(--text-soft)" stroke-width="2"/>
+        <text x="300" y="80" text-anchor="middle" class="s">แยกเป็น</text>
+        <rect x="100" y="95" width="150" height="55" rx="10" fill="none" stroke="var(--accent-2)" stroke-width="2"/>
+        <text x="175" y="118" text-anchor="middle" class="t">SSTr</text>
+        <text x="175" y="136" text-anchor="middle" class="s">ผันแปรระหว่างกลุ่ม</text>
+        <rect x="350" y="95" width="150" height="55" rx="10" fill="none" stroke="var(--accent-3)" stroke-width="2"/>
+        <text x="425" y="118" text-anchor="middle" class="t">SSE</text>
+        <text x="425" y="136" text-anchor="middle" class="s">ผันแปรภายในกลุ่ม</text>
+        <text x="300" y="165" text-anchor="middle" class="s" font-weight="700">SST = SSTr + SSE</text>
+      </svg>
+      <figcaption>รูปที่ 2: การแยกความผันแปรรวม (SST) ออกเป็น 2 ส่วน</figcaption>
+    </div>
+
+    <div class="card">
+      <h3>⚖️ เกณฑ์การตัดสินใจ &amp; ขั้นตอนการทดสอบ 5 ขั้น</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">กำหนดสมมติฐาน H₀ และ H₁</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">กำหนดระดับนัยสำคัญ α</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">พิจารณาข้อตกลง (แจกแจงปรกติ + ความแปรปรวนเท่ากัน) แล้วเลือกตัวสถิติทดสอบ (F)</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body">คำนวณค่าสถิติ F และหาค่า p-value (จาก SPSS/Excel หรือคำนวณมือ)</div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-body">ตัดสินใจ: <b>ปฏิเสธ H₀</b> ถ้า p-value ≤ α หรือ F ≥ f₍α,k−1,n−k₎ แล้วสรุปผล</div></div>
+      </div>
+      <div class="note">ถ้าปฏิเสธ H₀ → มีค่าเฉลี่ยอย่างน้อย 2 กลุ่มต่างกัน แต่ยังไม่รู้ว่าคู่ไหน จึงต้องทำ <b>Multiple Comparison (Post-hoc)</b> ต่อ</div>
+    </div>
+
+    <div class="card">
+      <h3>🔍 การเปรียบเทียบพหุคูณ (Multiple Comparison / Post-hoc)</h3>
+      <p>ทำต่อ<b>เฉพาะเมื่อปฏิเสธ H₀</b> จาก ANOVA แล้ว เพื่อดูว่าคู่ใดบ้างที่ค่าเฉลี่ยต่างกัน</p>
+      <table>
+        <tr><th>วิธี</th><th>เงื่อนไขการใช้</th></tr>
+        <tr><td>LSD (Least Significant Difference)</td><td>เปรียบเทียบค่าเฉลี่ยได้ครั้งละหลายคู่ (error สะสมง่ายกว่าวิธีอื่น)</td></tr>
+        <tr><td>Tukey's HSD</td><td>ตัวอย่างแต่ละกลุ่ม<b>ขนาดเท่ากัน</b></td></tr>
+        <tr><td>Scheffe</td><td>ตัวอย่างแต่ละกลุ่ม<b>ขนาดเท่ากันหรือไม่เท่ากันก็ได้</b></td></tr>
+        <tr><td>Bonferroni</td><td>จำนวนกลุ่มตัวอย่าง<b>ไม่เกิน 5 กลุ่ม</b></td></tr>
+      </table>
+      <div class="formula">LSD = t₍α/2, ν₎ · √( MSE · (1/nᵢ + 1/nⱼ) )</div>
+      <p>เกณฑ์: ถ้า |X̄ᵢ − X̄ⱼ| ≥ LSD → คู่นั้น<b>แตกต่างอย่างมีนัยสำคัญ</b> ถ้าน้อยกว่า → ไม่แตกต่าง</p>
+    </div>
+
+    <div class="card">
+      <h3>💻 คำสั่งในโปรแกรม</h3>
+      <div class="two-col">
+        <div>
+          <h4>SPSS</h4>
+          <ul class="tight">
+            <li>ทดสอบข้อตกลง: <code>Analyze → Descriptive Statistics → Explore</code></li>
+            <li>ทำ ANOVA: <code>Analyze → Compare Means → One-Way ANOVA</code></li>
+            <li>Post-hoc: ปุ่ม <code>Post Hoc</code> ในหน้าต่าง One-Way ANOVA</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Excel</h4>
+          <ul class="tight">
+            <li><code>Data → Data Analysis → Anova: Single Factor</code></li>
+            <li>ระบุ Input Range และ Alpha แล้วกด OK</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= ANOVA EXAMPLE (STEP BY STEP) ================= -->
+  <div class="panel" id="panel-anova-example">
+
+    <div class="card">
+      <h3>🐷 ตัวอย่างละเอียด: อาหารสุกร 4 สูตร (จากสไลด์หน้า 149–153)</h3>
+      <p>โจทย์: ทดลองอาหารสุกร 4 สูตร สูตรละ 5 ตัว (n=20 ตัว) หลังทดลองชั่งน้ำหนัก (กก.) จงทดสอบว่าอาหารทั้ง 4 สูตรมีประสิทธิภาพต่างกันหรือไม่ ที่ระดับนัยสำคัญ 0.05</p>
+      <table>
+        <tr><th>ตัวสังเกตที่</th><th>สูตร 1</th><th>สูตร 2</th><th>สูตร 3</th><th>สูตร 4</th></tr>
+        <tr><td>1</td><td>137.8</td><td>154.4</td><td>163.8</td><td>143.2</td></tr>
+        <tr><td>2</td><td>129.3</td><td>146.3</td><td>165.6</td><td>141.0</td></tr>
+        <tr><td>3</td><td>146.1</td><td>143.8</td><td>162.4</td><td>150.7</td></tr>
+        <tr><td>4</td><td>132.9</td><td>149.5</td><td>157.3</td><td>137.8</td></tr>
+        <tr><td>5</td><td>139.7</td><td>159.6</td><td>161.0</td><td>145.5</td></tr>
+        <tr><td><b>ผลรวม Xᵢ.</b></td><td><b>685.8</b></td><td><b>753.6</b></td><td><b>810.1</b></td><td><b>718.2</b></td></tr>
+      </table>
+      <p>ผลรวมทั้งหมด X.. = 685.8+753.6+810.1+718.2 = <b>2,967.7</b> &nbsp;|&nbsp; k = 4, n = 20 (nᵢ=5 ทุกกลุ่ม)</p>
+    </div>
+
+    <div class="card">
+      <h3>ขั้นที่ 1–2: ตั้งสมมติฐาน &amp; กำหนด α</h3>
+      <div class="formula">H₀ : μ₁ = μ₂ = μ₃ = μ₄<br>H₁ : μᵢ อย่างน้อย 2 ค่า ไม่เท่ากัน<br>α = 0.05</div>
+    </div>
+
+    <div class="card">
+      <h3>ขั้นที่ 3–4: คำนวณ SST, SSTr, SSE ทีละขั้น (ตัวเลขมาจากไหน)</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">
+          หา <b>ΣΣXᵢⱼ²</b> (ยกกำลังสองค่าทุกตัว แล้วรวมทั้งหมด 20 ตัว):<br>
+          137.8²+129.3²+...+145.5² = <b class="result">442,523.61</b>
+        </div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">
+          หา <b>X..² / n</b> (ตัวแก้ไข หรือ Correction Term):<br>
+          2,967.7² / 20 = 8,807,243.29 / 20 = <b class="result">440,362.16</b>
+        </div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">
+          <b>SST = ΣΣXᵢⱼ² − X..²/n</b><br>
+          = 442,523.61 − 440,362.16 = <b class="result">2,161.45</b>
+        </div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body">
+          หา <b>ΣXᵢ.²/nᵢ</b> (ผลรวมแต่ละกลุ่มยกกำลังสอง หารด้วยจำนวนตัวอย่างกลุ่มนั้น แล้วรวมทุกกลุ่ม):<br>
+          685.8²/5 = 94,064.33<br>
+          753.6²/5 = 113,582.59<br>
+          810.1²/5 = 131,252.40<br>
+          718.2²/5 = 103,162.25<br>
+          รวม = <b class="result">442,061.57</b>
+        </div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-body">
+          <b>SSTr = ΣXᵢ.²/nᵢ − X..²/n</b><br>
+          = 442,061.57 − 440,362.16 = <b class="result">1,699.41</b>
+        </div></div>
+        <div class="step"><div class="step-num">6</div><div class="step-body">
+          <b>SSE = SST − SSTr</b><br>
+          = 2,161.45 − 1,699.41 = <b class="result">462.04</b>
+        </div></div>
+      </div>
+
+      <h4>สรุปในตาราง ANOVA</h4>
+      <table>
+        <tr><th>แหล่งความแปรปรวน</th><th>df</th><th>SS</th><th>MS</th><th>F</th></tr>
+        <tr><td>สูตรอาหาร (Treatment)</td><td>4−1 = 3</td><td>1,699.41</td><td>1699.41/3 = 566.47</td><td rowspan="2">566.47/28.8 ≈ <b>19.61</b></td></tr>
+        <tr><td>ความคลาดเคลื่อน (Error)</td><td>20−4 = 16</td><td>462.04</td><td>462.04/16 = 28.80</td></tr>
+        <tr><td>รวม (Total)</td><td>20−1 = 19</td><td>2,161.45</td><td>—</td><td>—</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>ขั้นที่ 5: ตัดสินใจและสรุปผล</h3>
+      <p>จาก F = 19.61 ได้ p-value &lt; 0.05 (มีค่าน้อยมาก) → <b>ปฏิเสธ H₀</b></p>
+      <p>สรุป: <b>อาหารสุกรอย่างน้อย 2 สูตร มีประสิทธิภาพแตกต่างกัน</b> ที่ระดับนัยสำคัญ 0.05</p>
+      <div class="note">เนื่องจากปฏิเสธ H₀ → ต้องทำ Post-hoc (เช่น LSD) ต่อ เพื่อหาว่าคู่ใดต่างกัน (ดูผลในสไลด์หน้า 152-153: พบว่าสูตร 1 กับ 4 และ 2 กับ 4 ไม่ต่างกัน แต่คู่อื่นต่างกันอย่างมีนัยสำคัญ)</div>
+    </div>
+
+    <div class="card">
+      <h3>🔁 ตัวอย่างที่ 2 (จาก SPSS Output): ความเครียดของนักศึกษา 4 ชั้นปี</h3>
+      <p>ผลลัพธ์จาก SPSS: <b>F = 12.057, Sig. (p-value) &lt; .001</b>, df Treatment = 3, df Error = 146, df Total = 149</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">H₀: μ₁=μ₂=μ₃=μ₄ (ความเครียดเฉลี่ยของนักศึกษา 4 ชั้นปีเท่ากัน) &nbsp; H₁: อย่างน้อย 2 ค่าไม่เท่ากัน</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">α = 0.05 (โจทย์ถามที่ 0.01 แต่ทดสอบด้วย α ที่กำหนด)</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">p-value &lt; .001 <b>น้อยกว่า</b> α = 0.05 → <b class="result">ปฏิเสธ H₀</b></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body">สรุป: นักศึกษาแต่ละชั้นปีมีคะแนนความเครียดเฉลี่ย<b>แตกต่างกัน</b> อย่างมีนัยสำคัญ (p &lt; 0.01)</div></div>
+      </div>
+      <div class="note">Post-hoc (Scheffe) พบว่า: ชั้นปีที่ 1 กับ 2 <b>ไม่ต่างกัน</b> (p=0.978) แต่ชั้นปีที่ 3, 4 ต่างจากกลุ่มอื่นอย่างมีนัยสำคัญ → เรียงกลุ่มได้เป็น: ปี2(20.13) ≈ ปี1(20.93) &lt; ปี4(27.79) ≈ ปี3(29.45)</div>
+    </div>
+
+  </div>
+
+  <!-- ================= CHI-SQUARE THEORY ================= -->
+  <div class="panel" id="panel-chi-theory">
+
+    <div class="card">
+      <h3>🎯 ข้อมูลเชิงจำแนก (Categorical Data)</h3>
+      <p>การทดสอบไคสแควร์ใช้กับข้อมูลที่เป็น<b>เชิงคุณภาพอย่างน้อย 1 ตัว</b> โดยข้อมูลอยู่ในรูป <b>จำนวนนับ (Count data)</b></p>
+      <div class="two-col">
+        <div class="note"><b>นามบัญญัติ (Nominal)</b><br>เช่น เพศ, สี, ประเภทสัตว์ — ไม่มีลำดับ</div>
+        <div class="note"><b>เรียงลำดับ (Ordinal)</b><br>เช่น เห็นด้วย/ไม่แน่ใจ/ไม่เห็นด้วย — มีลำดับ</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🧩 การทดสอบไคสแควร์ 3 แบบ — ต่างกันอย่างไร</h3>
+      <svg viewBox="0 0 780 260" xmlns="http://www.w3.org/2000/svg">
+        <style>.tt{font-size:13px;font-weight:700;fill:var(--text);font-family:Sarabun,sans-serif;} .ss{font-size:10.5px;fill:var(--text-soft);font-family:Sarabun,sans-serif;}</style>
+        <rect x="20" y="20" width="230" height="210" rx="12" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <text x="135" y="45" text-anchor="middle" class="tt">Independence</text>
+        <text x="135" y="63" text-anchor="middle" class="ss">(ความเป็นอิสระ)</text>
+        <text x="135" y="90" text-anchor="middle" class="ss">กลุ่มตัวอย่าง</text>
+        <text x="135" y="105" text-anchor="middle" class="ss" font-weight="700">1 กลุ่ม</text>
+        <text x="135" y="130" text-anchor="middle" class="ss">จำแนกด้วย</text>
+        <text x="135" y="145" text-anchor="middle" class="ss" font-weight="700">ตัวแปรคุณภาพ 2 ตัว</text>
+        <text x="135" y="175" text-anchor="middle" class="ss">ถาม: ตัวแปร A</text>
+        <text x="135" y="190" text-anchor="middle" class="ss">กับ B สัมพันธ์กันไหม</text>
+        <text x="135" y="215" text-anchor="middle" class="ss" fill="var(--accent)">เช่น เพศ × ระดับความเครียด</text>
+
+        <rect x="275" y="20" width="230" height="210" rx="12" fill="none" stroke="var(--accent-2)" stroke-width="2"/>
+        <text x="390" y="45" text-anchor="middle" class="tt">Homogeneity</text>
+        <text x="390" y="63" text-anchor="middle" class="ss">(ความคล้ายคลึงกัน)</text>
+        <text x="390" y="90" text-anchor="middle" class="ss">ประชากร</text>
+        <text x="390" y="105" text-anchor="middle" class="ss" font-weight="700">≥ 2 กลุ่ม (อิสระกัน)</text>
+        <text x="390" y="130" text-anchor="middle" class="ss">จำแนกด้วย</text>
+        <text x="390" y="145" text-anchor="middle" class="ss" font-weight="700">ตัวแปรคุณภาพ 1 ตัว</text>
+        <text x="390" y="175" text-anchor="middle" class="ss">ถาม: สัดส่วนของ</text>
+        <text x="390" y="190" text-anchor="middle" class="ss">แต่ละกลุ่มต่างกันไหม</text>
+        <text x="390" y="215" text-anchor="middle" class="ss" fill="var(--accent-2)">เช่น ชาย/หญิง × สัดส่วนความเครียด</text>
+
+        <rect x="530" y="20" width="230" height="210" rx="12" fill="none" stroke="var(--accent-3)" stroke-width="2"/>
+        <text x="645" y="45" text-anchor="middle" class="tt">Goodness-of-fit</text>
+        <text x="645" y="63" text-anchor="middle" class="ss">(ความกลมกลืน)</text>
+        <text x="645" y="90" text-anchor="middle" class="ss">กลุ่มตัวอย่าง</text>
+        <text x="645" y="105" text-anchor="middle" class="ss" font-weight="700">1 กลุ่ม</text>
+        <text x="645" y="130" text-anchor="middle" class="ss">แบ่งเป็นหลาย</text>
+        <text x="645" y="145" text-anchor="middle" class="ss" font-weight="700">คุณลักษณะ</text>
+        <text x="645" y="175" text-anchor="middle" class="ss">ถาม: ตรงกับการ</text>
+        <text x="645" y="190" text-anchor="middle" class="ss">แจกแจงที่คาดไว้ไหม</text>
+        <text x="645" y="215" text-anchor="middle" class="ss" fill="var(--accent-3)">เช่น ตรวจสอบว่าเป็น Poisson</text>
+      </svg>
+      <figcaption>รูปที่ 3: เปรียบเทียบการทดสอบไคสแควร์ทั้ง 3 แบบ</figcaption>
+
+      <table>
+        <tr><th>ประเภท</th><th>สมมติฐาน H₀</th><th>df</th></tr>
+        <tr><td>Test of Independence</td><td>ตัวแปร A และ B ไม่มีความสัมพันธ์กัน (เป็นอิสระต่อกัน)</td><td>(r−1)(c−1)</td></tr>
+        <tr><td>Test of Homogeneity</td><td>สัดส่วนของแต่ละคุณลักษณะในทุกประชากรไม่แตกต่างกัน</td><td>(r−1)(c−1)</td></tr>
+        <tr><td>Goodness-of-fit</td><td>ประชากรมีการแจกแจงตามที่ระบุ</td><td>k−1−m</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>🧮 ตัวสถิติทดสอบ</h3>
+      <div class="formula">χ² = ΣΣ (Oᵢⱼ − Eᵢⱼ)² / Eᵢⱼ</div>
+      <div class="formula">Eᵢⱼ = (Oᵢ.)(O.ⱼ) / n = (Oᵢ.)(O.ⱼ) / O..</div>
+      <p><b>m</b> ใน Goodness-of-fit คือจำนวนพารามิเตอร์ที่ต้อง<b>ประมาณค่า</b>จากข้อมูล (เช่น ประมาณ λ ของ Poisson ใช้ X̄ → m=1)</p>
+      <p><b>เกณฑ์ตัดสินใจ:</b> ปฏิเสธ H₀ ถ้า χ² ≥ χ²₍α,ν₎ &nbsp;หรือ&nbsp; p-value ≤ α</p>
+    </div>
+
+    <div class="card">
+      <h3>⚠️ กฎการยุบเซลล์ (Cell Merging) — สำคัญมาก มักออกสอบ</h3>
+      <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+        <style>.ft{font-size:12.5px;fill:var(--text);font-family:Sarabun,sans-serif;} .fs{font-size:10.5px;fill:var(--text-soft);font-family:Sarabun,sans-serif;}</style>
+        <rect x="250" y="10" width="200" height="45" rx="10" fill="var(--code-bg)" stroke="var(--accent)" stroke-width="2"/>
+        <text x="350" y="37" text-anchor="middle" class="ft" font-weight="700">คำนวณ Eᵢⱼ ทุกเซลล์</text>
+        <line x1="350" y1="55" x2="350" y2="80" stroke="var(--text-soft)" stroke-width="2" marker-end="url(#a2)"/>
+        <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--text-soft)"/></marker></defs>
+
+        <rect x="230" y="80" width="240" height="55" rx="10" fill="none" stroke="var(--wrong)" stroke-width="2"/>
+        <text x="350" y="103" text-anchor="middle" class="ft" font-weight="700">Eᵢⱼ &lt; 1 ?</text>
+        <text x="350" y="122" text-anchor="middle" class="fs">ถ้าใช่ → ยุบรวมกับเซลล์ข้างเคียง (รวม O ด้วย) จนกว่า Eᵢⱼ ≥ 1</text>
+
+        <line x1="350" y1="135" x2="350" y2="160" stroke="var(--text-soft)" stroke-width="2" marker-end="url(#a2)"/>
+        <rect x="180" y="160" width="340" height="65" rx="10" fill="none" stroke="var(--accent-2)" stroke-width="2"/>
+        <text x="350" y="182" text-anchor="middle" class="ft" font-weight="700">นับเซลล์ที่ 1 ≤ Eᵢⱼ ≤ 5 คิดเป็น % ของทั้งหมด</text>
+        <text x="350" y="200" text-anchor="middle" class="fs">&gt; 20% → ยุบเซลล์ต่อไปอีก</text>
+        <text x="350" y="215" text-anchor="middle" class="fs">≤ 20% → ใช้ Pearson Chi-Square ได้เลย</text>
+
+        <line x1="350" y1="225" x2="350" y2="250" stroke="var(--text-soft)" stroke-width="2" marker-end="url(#a2)"/>
+        <rect x="150" y="250" width="400" height="60" rx="10" fill="none" stroke="var(--accent-3)" stroke-width="2"/>
+        <text x="350" y="270" text-anchor="middle" class="ft" font-weight="700">กรณีเหลือเป็นตาราง 2×2 เท่านั้น</text>
+        <text x="350" y="288" text-anchor="middle" class="fs">5≤Eᵢⱼ≤10 บางเซลล์→Yate's | Eᵢⱼ&gt;10ทุกเซลล์→ปกติ | Eᵢⱼ&lt;5บางเซลล์→Fisher's Exact</text>
+      </svg>
+      <figcaption>รูปที่ 4: ผังการตัดสินใจยุบเซลล์และเลือกสถิติทดสอบ</figcaption>
+
+      <div class="formula">Yate's Correction: χ² = ΣΣ (|Oᵢⱼ − Eᵢⱼ| − 0.5)² / Eᵢⱼ</div>
+      <div class="warn">ใน SPSS ดูที่ footnote ใต้ตาราง "Chi-Square Tests" เช่น "1 cells (16.7%) have expected count less than 5" — ถ้าเปอร์เซ็นต์นี้ <b>ไม่เกิน 20%</b> ยังใช้ผลทดสอบได้ตามปกติ</div>
+    </div>
+
+    <div class="card">
+      <h3>💻 คำสั่งใน SPSS</h3>
+      <p><code>Analyze → Descriptive Statistics → Crosstabs</code> → ใส่ตัวแปรลง Row/Column → กด <code>Statistics</code> ติ๊ก <code>Chi-square</code> → กด <code>Cells</code> ติ๊ก Observed และ Expected</p>
+    </div>
+
+  </div>
+
+  <!-- ================= CHI-SQUARE EXAMPLE (STEP BY STEP) ================= -->
+  <div class="panel" id="panel-chi-example">
+
+    <div class="card">
+      <h3>👔 ตัวอย่างละเอียด 1: ภาวะการเป็นผู้นำ × เพศ (Test of Independence, จากสไลด์หน้า 169-172)</h3>
+      <p>โจทย์: สุ่มผู้บริหาร 75 คน วัดภาวะการเป็นผู้นำ 3 ระดับ (มาก/ปานกลาง/น้อย) จำแนกตามเพศ จงทดสอบว่าเพศและภาวะการเป็นผู้นำมีความสัมพันธ์กันหรือไม่</p>
+      <table>
+        <tr><th>เพศ</th><th>มาก</th><th>ปานกลาง</th><th>น้อย</th><th>รวม</th></tr>
+        <tr><td>ชาย</td><td>15</td><td>24</td><td>5</td><td>44</td></tr>
+        <tr><td>หญิง</td><td>7</td><td>22</td><td>2</td><td>31</td></tr>
+        <tr><td>รวม</td><td>22</td><td>46</td><td>7</td><td>75</td></tr>
+      </table>
+
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">
+          H₀: เพศและภาวะการเป็นผู้นำ<b>ไม่มี</b>ความสัมพันธ์กัน &nbsp; H₁: มีความสัมพันธ์กัน &nbsp; α = 0.05
+        </div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">
+          หา Eᵢⱼ = (Oᵢ.)(O.ⱼ)/n ของทุกเซลล์:<br>
+          E₁₁ = 44×22/75 = 12.91 &nbsp; E₁₂ = 44×46/75 = 26.99 &nbsp; <b style="color:var(--wrong)">E₁₃ = 44×7/75 = 4.10 (&lt;5)</b><br>
+          E₂₁ = 31×22/75 = 9.09 &nbsp; E₂₂ = 31×46/75 = 19.01 &nbsp; <b style="color:var(--wrong)">E₂₃ = 31×7/75 = 2.90 (&lt;5)</b>
+        </div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">
+          พบ 2 เซลล์ (E₁₃, E₂₃) ที่ &lt; 5 จาก 6 เซลล์ = 33.3% (&gt;20%) → ต้อง<b>ยุบคอลัมน์</b> "ปานกลาง" รวมกับ "น้อย" เป็น "ปานกลางหรือน้อย"
+        </div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body">
+          ตารางใหม่หลังยุบ:<br>
+          ชาย: มาก=15, ปานกลางหรือน้อย=24+5=29, รวม=44<br>
+          หญิง: มาก=7, ปานกลางหรือน้อย=22+2=24, รวม=31<br>
+          รวม: มาก=22, ปานกลางหรือน้อย=53, รวม=75
+        </div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-body">
+          คำนวณ Eᵢⱼ ใหม่: E₁₁=44×22/75=<b class="result">12.91</b>, E₁₂=44×53/75=<b class="result">31.09</b>, E₂₁=31×22/75=<b class="result">9.09</b>, E₂₂=31×53/75=<b class="result">21.91</b> — เป็นตาราง 2×2 และมีบางเซลล์ที่ 5≤Eᵢⱼ≤10 (E₂₁=9.09) → ใช้ <b>Yate's Correction</b>
+        </div></div>
+        <div class="step"><div class="step-num">6</div><div class="step-body">
+          χ² = Σ(|Oᵢⱼ−Eᵢⱼ|−0.5)²/Eᵢⱼ<br>
+          = (|15−12.91|−0.5)²/12.91 + (|29−31.09|−0.5)²/31.09 + (|7−9.09|−0.5)²/9.09 + (|24−21.91|−0.5)²/21.91<br>
+          = <b class="result">0.67</b> &nbsp; (df = (2−1)(2−1) = 1)
+        </div></div>
+        <div class="step"><div class="step-num">7</div><div class="step-body">
+          p-value = P(χ²₍₁₎ &gt; 0.67) = <b class="result">0.413</b> &nbsp; ซึ่ง<b>มากกว่า</b> α = 0.05 → <b class="result">ยอมรับ H₀</b>
+        </div></div>
+      </div>
+      <div class="note">สรุป: เพศและภาวะการเป็นผู้นำ<b>ไม่มีความสัมพันธ์กัน</b> ที่ระดับนัยสำคัญ 0.05</div>
+    </div>
+
+    <div class="card">
+      <h3>🏭 ตัวอย่างละเอียด 2: คุณภาพสินค้า × ผลัดการผลิต (Test of Homogeneity, จากสไลด์หน้า 188-190)</h3>
+      <p>โจทย์: สุ่มสินค้าจาก 3 ผลัด (เช้า 950, บ่าย 945, ดึก 940 ชิ้น) รวม 2,835 ชิ้น จำแนกคุณภาพเป็น "ชำรุด" กับ "ดี" ทดสอบว่าสัดส่วนคุณภาพของแต่ละผลัดต่างกันหรือไม่</p>
+      <table>
+        <tr><th>ผลัด</th><th>ชำรุด</th><th>ดี</th><th>รวม</th></tr>
+        <tr><td>เช้า</td><td>45</td><td>905</td><td>950</td></tr>
+        <tr><td>บ่าย</td><td>55</td><td>890</td><td>945</td></tr>
+        <tr><td>ดึก</td><td>70</td><td>870</td><td>940</td></tr>
+        <tr><td>รวม</td><td>170</td><td>2,665</td><td>2,835</td></tr>
+      </table>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">
+          H₀: p₁=p₂=p₃ (สัดส่วนสินค้าดีของทั้ง 3 ผลัดเท่ากัน) &nbsp; H₁: มี pᵢ อย่างน้อย 2 ค่าไม่เท่ากัน
+        </div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">
+          E₁₁ = 950×170/2835 = <b class="result">56.97</b> &nbsp; E₁₂ = 950×2665/2835 = 893.27<br>
+          E₂₁ = 945×170/2835 = 56.67 &nbsp; E₂₂ = 888.33<br>
+          E₃₁ = 940×170/2835 = 56.37 &nbsp; E₃₂ = 883.63<br>
+          <i>(ทุกเซลล์ ≥ 5 → ไม่ต้องยุบเซลล์)</i>
+        </div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">
+          χ² = Σ(Oᵢⱼ−Eᵢⱼ)²/Eᵢⱼ = (45−56.97)²/56.97 + ... + (870−883.63)²/883.63 = <b class="result">6.23</b> &nbsp; df=(3−1)(2−1)=2
+        </div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body">
+          p-value = P(χ²₍₂₎ &gt; 6.23) = <b class="result">0.0444</b> &nbsp; ซึ่ง<b>น้อยกว่า</b> α = 0.05 → <b class="result">ปฏิเสธ H₀</b>
+        </div></div>
+      </div>
+      <div class="note">สรุป: คุณภาพสินค้าที่ผลิตจากทั้ง 3 ผลัด มีสัดส่วนที่<b>แตกต่างกัน</b> ที่ระดับนัยสำคัญ 0.05</div>
+    </div>
+
+    <div class="card">
+      <h3>📮 ตัวอย่างละเอียด 3: จำนวนครั้งร้องขอค่ารักษาพยาบาล (Goodness-of-fit กับ Poisson, จากสไลด์หน้า 203-207)</h3>
+      <p>โจทย์: สุ่มผู้ซื้อประกัน 200 คน บันทึกจำนวนครั้งที่ร้องขอค่ารักษาพยาบาลในช่วง 4 ปี ทดสอบว่าข้อมูลมีการแจกแจงปัวซองหรือไม่ ที่ α=0.05</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">
+          H₀: จำนวนครั้งที่ร้องขอมีการแจกแจงปัวซอง &nbsp; H₁: ไม่มีการแจกแจงปัวซอง
+        </div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">
+          ประมาณค่าพารามิเตอร์ λ ของปัวซอง ด้วย X̄ = ΣfX/Σf = 2.05 &nbsp; <i>(m = 1 พารามิเตอร์ที่ต้องประมาณ)</i>
+        </div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">
+          คำนวณ pᵢ จากสูตรปัวซอง f(x;λ)=e⁻ˡᵃᵐᵇᵈᵃλˣ/x! แล้ว Eᵢ = 200×pᵢ เช่น E₀=25.74, E₁=52.78, E₂=54.10, ... พบ E₆=2.66 และ E₇₊=1.06 ซึ่ง&lt;5 (คิดเป็น 25% ของ 8 เซลล์ &gt;20%) → ต้อง<b>ยุบ</b>รวมเป็นเซลล์เดียว (E=3.72, ยัง 1&lt;E&lt;5 แต่คิดเป็น 14.3% ของ 7 เซลล์ ≤20% ใช้ได้)
+        </div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body">
+          χ² = Σ(Oᵢ−Eᵢ)²/Eᵢ = <b class="result">2.118</b> &nbsp; df = k−1−m = 7−1−1 = <b class="result">5</b>
+        </div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-body">
+          p-value = P(χ²₍₅₎ &gt; 2.118) = <b class="result">0.8326</b> ซึ่ง<b>มากกว่า</b> α=0.05 → <b class="result">ยอมรับ H₀</b>
+        </div></div>
+      </div>
+      <div class="note">สรุป: จำนวนครั้งที่ร้องขอค่ารักษาพยาบาลมีการแจกแจง<b>สอดคล้องกับปัวซอง</b> ที่ระดับนัยสำคัญ 0.05</div>
+    </div>
+
+  </div>
+
+  <!-- ================= QUIZ ================= -->
+  <div class="panel" id="panel-quiz">
+    <div class="card">
+      <h3>✏️ ข้อสอบฝึกทำ — แบ่งเป็นชุด</h3>
+      <p>เลือก "ชุด" ที่ต้องการฝึกด้านล่าง แต่ละข้อกดเลือกคำตอบแล้วกด "ตรวจคำตอบชุดนี้" จะเฉลยพร้อมคำอธิบายทันที ชุดสุดท้าย (35 ข้อ) รวมทุกเรื่องเหมือนข้อสอบจริง</p>
+    </div>
+
+    <div class="subtabs">
+      <button class="subtab-btn active" data-sub="set1">ชุด 1: ANOVA แนวคิด (8 ข้อ)</button>
+      <button class="subtab-btn" data-sub="set2">ชุด 2: ANOVA คำนวณ (7 ข้อ)</button>
+      <button class="subtab-btn" data-sub="set3">ชุด 3: Chi-Square แนวคิด (8 ข้อ)</button>
+      <button class="subtab-btn" data-sub="set4">ชุด 4: Chi-Square คำนวณ/กฎยุบเซลล์ (7 ข้อ)</button>
+      <button class="subtab-btn" data-sub="setfinal">🏁 ชุดรวม 35 ข้อ (เหมือนข้อสอบจริง)</button>
+    </div>
+
+    <div class="subpanel active" id="sub-set1">
+      <div class="quiz-set-title">ชุด 1: ANOVA แนวคิด</div>
+      <div class="quiz-set-desc">เน้นความเข้าใจแนวคิด สมมติฐาน และข้อตกลงเบื้องต้น</div>
+      <div id="quiz-set1"></div>
+      <div class="quiz-controls">
+        <button class="primary" data-check="set1">ตรวจคำตอบชุดนี้</button>
+        <button class="ghost" data-reset="set1">ล้างคำตอบ</button>
+        <span class="score-box" id="score-set1">ยังไม่ได้ตรวจ</span>
+      </div>
+    </div>
+
+    <div class="subpanel" id="sub-set2">
+      <div class="quiz-set-title">ชุด 2: ANOVA การคำนวณ</div>
+      <div class="quiz-set-desc">เน้นการคำนวณ SST, SSTr, SSE, df, F และการอ่านผล</div>
+      <div id="quiz-set2"></div>
+      <div class="quiz-controls">
+        <button class="primary" data-check="set2">ตรวจคำตอบชุดนี้</button>
+        <button class="ghost" data-reset="set2">ล้างคำตอบ</button>
+        <span class="score-box" id="score-set2">ยังไม่ได้ตรวจ</span>
+      </div>
+    </div>
+
+    <div class="subpanel" id="sub-set3">
+      <div class="quiz-set-title">ชุด 3: Chi-Square แนวคิด</div>
+      <div class="quiz-set-desc">เน้นความแตกต่างของ Independence / Homogeneity / Goodness-of-fit</div>
+      <div id="quiz-set3"></div>
+      <div class="quiz-controls">
+        <button class="primary" data-check="set3">ตรวจคำตอบชุดนี้</button>
+        <button class="ghost" data-reset="set3">ล้างคำตอบ</button>
+        <span class="score-box" id="score-set3">ยังไม่ได้ตรวจ</span>
+      </div>
+    </div>
+
+    <div class="subpanel" id="sub-set4">
+      <div class="quiz-set-title">ชุด 4: Chi-Square การคำนวณ &amp; กฎยุบเซลล์</div>
+      <div class="quiz-set-desc">เน้นการคำนวณ Eᵢⱼ, χ², df และกฎการยุบเซลล์/Yate's/Fisher's</div>
+      <div id="quiz-set4"></div>
+      <div class="quiz-controls">
+        <button class="primary" data-check="set4">ตรวจคำตอบชุดนี้</button>
+        <button class="ghost" data-reset="set4">ล้างคำตอบ</button>
+        <span class="score-box" id="score-set4">ยังไม่ได้ตรวจ</span>
+      </div>
+    </div>
+
+    <div class="subpanel" id="sub-setfinal">
+      <div class="quiz-set-title">🏁 ชุดรวม 35 ข้อ — จำลองข้อสอบจริง</div>
+      <div class="quiz-set-desc">รวมทั้ง ANOVA และ Chi-Square ผสมกันแบบสุ่ม พร้อมเฉลยละเอียดทุกข้อ (จำนวนข้อเท่าข้อสอบจริง)</div>
+      <div id="quiz-setfinal"></div>
+      <div class="quiz-controls">
+        <button class="primary" data-check="setfinal">ตรวจคำตอบทั้ง 35 ข้อ</button>
+        <button class="ghost" data-reset="setfinal">ล้างคำตอบ</button>
+        <span class="score-box" id="score-setfinal">ยังไม่ได้ตรวจ</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>ทำสรุปโดยรวบรวมจากสไลด์ Chapter 5 Part 2 (อ.ดร.ธนวรรณ ประฮาดไชย) — สู้ ๆ กับข้อสอบวันศุกร์นะ 💪</footer>
+</div>
+
+<script>
+/* ---------- THEME ---------- */
+const root = document.documentElement;
+const toggleBtn = document.getElementById('themeToggle');
+const themeLabel = document.getElementById('themeLabel');
+function applyTheme(t){
+  root.setAttribute('data-theme', t);
+  themeLabel.textContent = t === 'dark' ? 'โหมดสว่าง' : 'โหมดมืด';
+  toggleBtn.firstChild.textContent = t === 'dark' ? '☀️ ' : '🌙 ';
+}
+let current = 'light';
+applyTheme(current);
+toggleBtn.addEventListener('click', ()=>{ current = current==='dark'?'light':'dark'; applyTheme(current); });
+
+/* ---------- MAIN TABS ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+});
+
+/* ---------- SUB TABS (quiz sets) ---------- */
+document.querySelectorAll('.subtab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.subtab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.subpanel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('sub-'+btn.dataset.sub).classList.add('active');
+  });
+});
+
+/* ================= QUIZ DATA ================= */
+const set1 = [
+{q:"1. One-way ANOVA เหมาะกับข้อมูลลักษณะใด?",opts:["ตัวแปรตามเชิงปริมาณ ตัวแปรอิสระเชิงจำแนก","ตัวแปรตามเชิงจำแนก ตัวแปรอิสระเชิงปริมาณ","ตัวแปรทั้งสองเป็นเชิงจำแนกทั้งคู่","ตัวแปรทั้งสองเป็นเชิงปริมาณทั้งคู่"],ans:0,exp:"ตัวแปรตาม (สิ่งที่วัด เช่น คะแนน น้ำหนัก) เป็นเชิงปริมาณ ส่วนตัวแปรอิสระ (กลุ่ม/สิ่งทดลอง) เป็นเชิงจำแนก"},
+{q:"2. ข้อใด ไม่ใช่ ข้อตกลงเบื้องต้นของ One-way ANOVA",opts:["ตัวอย่างแต่ละกลุ่มเป็นอิสระต่อกัน","ข้อมูลแต่ละกลุ่มมีการแจกแจงแบบปรกติ","ความแปรปรวนของแต่ละกลุ่มไม่ต่างกัน","จำนวนตัวอย่างในแต่ละกลุ่มต้องเท่ากันเสมอ"],ans:3,exp:"ANOVA ไม่จำเป็นต้องมีขนาดตัวอย่างเท่ากันในแต่ละกลุ่ม (วิธี Scheffe ใช้ได้แม้ขนาดไม่เท่ากัน)"},
+{q:"3. ตัวสถิติทดสอบของ One-way ANOVA คือ",opts:["F = MSTr / MSE","χ² = Σ(O−E)²/E","t = (X̄−μ)/(s/√n)","Z = (X̄−μ)/(σ/√n)"],ans:0,exp:"F = MSTr/MSE ~ f(k-1, n-k)"},
+{q:"4. เมื่อ n ≤ 50 ควรใช้สถิติใดทดสอบการแจกแจงแบบปรกติ?",opts:["Levene's test","Kolmogorov-Smirnov","Shapiro-Wilk","Pearson Chi-Square"],ans:2,exp:"Shapiro-Wilk ใช้เมื่อ n ≤ 50 ส่วน Kolmogorov-Smirnov ใช้เมื่อ n > 50"},
+{q:"5. Levene's test ใช้ทดสอบอะไร?",opts:["ข้อมูลมีการแจกแจงแบบปรกติหรือไม่","ค่าเฉลี่ยของประชากรเท่ากันหรือไม่","ความแปรปรวนของประชากรทุกกลุ่มเท่ากันหรือไม่","ตัวแปรสองตัวมีความสัมพันธ์กันหรือไม่"],ans:2,exp:"Levene's test ใช้ทดสอบ H0: ประชากรทุกกลุ่มมีความแปรปรวนเท่ากัน"},
+{q:"6. เมื่อปฏิเสธ H0 จาก ANOVA แล้ว ขั้นตอนถัดไปที่ควรทำคือ",opts:["ทำ Levene's test ซ้ำ","ทำ Multiple Comparison (Post-hoc) เพื่อดูว่าคู่ใดต่างกัน","หยุดการวิเคราะห์ทันที","เปลี่ยนไปใช้ Chi-square test แทน"],ans:1,exp:"หลังปฏิเสธ H0 ต้องทำ Post-hoc test เพื่อระบุว่าคู่ไหนบ้างที่ค่าเฉลี่ยแตกต่างกันจริง"},
+{q:"7. วิธี Post-hoc ใดที่ใช้ได้แม้ขนาดตัวอย่างแต่ละกลุ่มไม่เท่ากัน",opts:["Tukey's HSD เท่านั้น","Scheffe","ใช้ไม่ได้เลยถ้าขนาดไม่เท่ากัน","F-test เดิม"],ans:1,exp:"Scheffe ใช้ได้ทั้งกรณีขนาดตัวอย่างเท่ากันหรือไม่เท่ากันก็ได้ ส่วน Tukey's HSD ต้องการขนาดเท่ากัน"},
+{q:"8. วิธี Bonferroni Test เหมาะกับกรณีใด?",opts:["จำนวนกลุ่มตัวอย่างไม่เกิน 5 กลุ่ม","จำนวนกลุ่มตัวอย่างมากกว่า 10 กลุ่ม","ใช้ได้เฉพาะข้อมูลที่ไม่ปรกติ","ใช้แทน Levene's test ได้"],ans:0,exp:"Bonferroni Test เหมาะกับกรณีจำนวนกลุ่มตัวอย่างไม่เกิน 5 กลุ่ม"}
+];
+
+const set2 = [
+{q:"1. ถ้ามี k=4 กลุ่ม และ n=20 ตัวอย่างทั้งหมด df ของ Error (Within Groups) คือเท่าใด",opts:["3","16","19","20"],ans:1,exp:"df Error = n − k = 20 − 4 = 16"},
+{q:"2. จากข้อ 1 df ของ Total คือเท่าใด",opts:["16","17","19","20"],ans:2,exp:"df Total = n − 1 = 20 − 1 = 19"},
+{q:"3. ข้อใดถูกต้องเกี่ยวกับผลรวมกำลังสอง",opts:["SST = SSTr − SSE","SSE = SST + SSTr","SST = SSTr + SSE","SSTr = SST × SSE"],ans:2,exp:"SST (Total) = SSTr (Treatment) + SSE (Error)"},
+{q:"4. จากตัวอย่างอาหารสุกร 4 สูตร ได้ SST=2,161.45 และ SSTr=1,699.41 ค่า SSE เท่ากับเท่าใด",opts:["462.04","3,860.86","2,161.45","1,699.41"],ans:0,exp:"SSE = SST − SSTr = 2,161.45 − 1,699.41 = 462.04"},
+{q:"5. จากข้อ 4 ถ้า df(Treatment)=3 และ df(Error)=16 ค่า MSTr และ MSE เท่ากับเท่าใด (ปัดทศนิยม 2 ตำแหน่ง)",opts:["MSTr=566.47, MSE=28.80","MSTr=28.80, MSE=566.47","MSTr=1699.41, MSE=462.04","MSTr=113.29, MSE=115.51"],ans:0,exp:"MSTr = SSTr/(k-1) = 1699.41/3 = 566.47, MSE = SSE/(n-k) = 462.04/16 = 28.80"},
+{q:"6. จากข้อ 5 ค่า F เท่ากับประมาณเท่าใด",opts:["≈0.05","≈19.6","≈566.47","≈28.8"],ans:1,exp:"F = MSTr/MSE = 566.47/28.80 ≈ 19.6"},
+{q:"7. ผลการทดสอบจาก SPSS ได้ F=12.057, Sig.<.001 ที่ α=0.05 สรุปว่าอย่างไร?",opts:["ยอมรับ H0 ค่าเฉลี่ยทุกกลุ่มเท่ากัน","ปฏิเสธ H0 มีค่าเฉลี่ยอย่างน้อย 2 กลุ่มที่แตกต่างกัน","สรุปไม่ได้เพราะข้อมูลไม่พอ","ต้องทำ Levene's test ก่อนจึงสรุปได้"],ans:1,exp:"p-value < .001 น้อยกว่า α=0.05 → ปฏิเสธ H0 → มีค่าเฉลี่ยอย่างน้อย 2 กลุ่มแตกต่างกัน"}
+];
+
+const set3 = [
+{q:"1. การทดสอบไคสแควร์ใช้กับข้อมูลประเภทใด?",opts:["ข้อมูลเชิงคุณภาพในรูปจำนวนนับ (count data)","ข้อมูลเชิงปริมาณต่อเนื่องเท่านั้น","ข้อมูลที่ต้องแจกแจงแบบปรกติเท่านั้น","ข้อมูลอนุกรมเวลาเท่านั้น"],ans:0,exp:"การทดสอบไคสแควร์ใช้กับข้อมูลเชิงคุณภาพอย่างน้อย 1 ตัวแปร โดยข้อมูลอยู่ในรูปจำนวนนับ"},
+{q:"2. Test of Independence ใช้ทดสอบเรื่องใด?",opts:["ค่าเฉลี่ยของ 2 กลุ่มเท่ากันหรือไม่","ความสัมพันธ์ระหว่างตัวแปรเชิงคุณภาพ 2 ตัว จากกลุ่มตัวอย่างกลุ่มเดียว","สัดส่วนของหลายประชากรที่เป็นอิสระกันว่าเท่ากันหรือไม่","การแจกแจงของข้อมูลตรงกับที่คาดไว้หรือไม่"],ans:1,exp:"Test of Independence ทดสอบความสัมพันธ์ระหว่างตัวแปรเชิงคุณภาพ 2 ตัวจากกลุ่มตัวอย่างกลุ่มเดียว"},
+{q:"3. Test of Homogeneity ใช้ในสถานการณ์ใด?",opts:["มีกลุ่มตัวอย่างกลุ่มเดียว ต้องการเทียบกับการแจกแจงทางทฤษฎี","มีประชากรตั้งแต่ 2 กลุ่มขึ้นไปที่เป็นอิสระกัน ต้องการเทียบสัดส่วนของคุณลักษณะ","ต้องการทดสอบค่าเฉลี่ยของหลายกลุ่ม","ต้องการทดสอบความแปรปรวนของสองกลุ่ม"],ans:1,exp:"Test of Homogeneity ใช้เมื่อมีประชากร ≥ 2 กลุ่มที่เป็นอิสระกัน ต้องการทดสอบว่าสัดส่วนของคุณลักษณะต่างกันหรือไม่"},
+{q:"4. Goodness-of-fit test ใช้ทดสอบเรื่องใด?",opts:["ความสัมพันธ์ระหว่างตัวแปร 2 ตัว","ลักษณะของประชากรกลุ่มเดียวว่าเป็นไปตามที่คาดไว้หรือการแจกแจงที่กำหนดหรือไม่","ค่าเฉลี่ยของ 3 กลุ่มขึ้นไป","ความแปรปรวนของหลายกลุ่ม"],ans:1,exp:"Goodness-of-fit test ทดสอบว่าข้อมูลกลุ่มตัวอย่างกลุ่มเดียวมีการแจกแจงตรงตามที่คาดไว้หรือไม่ เช่น Poisson"},
+{q:"5. df ของตาราง Contingency ขนาด r×c ในการทดสอบ Independence/Homogeneity คือ",opts:["r + c","r × c","(r−1)(c−1)","r − c"],ans:2,exp:"df = (r−1)(c−1)"},
+{q:"6. df ของ Goodness-of-fit test คำนวณจาก",opts:["k − 1 − m (m = จำนวนพารามิเตอร์ที่ประมาณค่า)","k + 1","(r−1)(c−1)","n − k"],ans:0,exp:"df = k − 1 − m โดย m คือจำนวนพารามิเตอร์ของการแจกแจงที่ต้องประมาณค่าจากข้อมูล"},
+{q:"7. ข้อใดเป็นตัวอย่างของข้อมูลแบบ Ordinal Scale?",opts:["เพศ (ชาย/หญิง)","ระดับความพึงพอใจ (มาก/ปานกลาง/น้อย)","หมายเลขโทรศัพท์","ชนิดของผลไม้"],ans:1,exp:"ระดับความพึงพอใจมีการเรียงลำดับ จึงเป็น Ordinal Scale ส่วนตัวอื่นเป็น Nominal Scale"},
+{q:"8. เกณฑ์การปฏิเสธ H0 ในการทดสอบไคสแควร์คือข้อใด",opts:["χ² ≥ χ²(α,ν) หรือ p-value ≤ α","χ² ≤ 0","p-value ≥ α เสมอ","df เท่ากับ 0"],ans:0,exp:"ปฏิเสธ H0 เมื่อค่าสถิติทดสอบ χ² มากกว่าหรือเท่ากับค่าวิกฤต หรือเมื่อ p-value ≤ α"}
+];
+
+const set4 = [
+{q:"1. สูตรความถี่คาดหวัง Eij คือข้อใด",opts:["Eij = Oij × n","Eij = (Oi.)(O.j) / n","Eij = Oi. + O.j","Eij = Oi. − O.j"],ans:1,exp:"Eij = (ผลรวมแถว i)(ผลรวมคอลัมน์ j) / จำนวนข้อมูลทั้งหมด n"},
+{q:"2. จากตาราง 2×2: แถว 1 รวม=44, แถว 2 รวม=31, คอลัมน์ 1 รวม=22, n=75 จงหา E11",opts:["6.45","12.91","9.09","22.00"],ans:1,exp:"E11 = (44×22)/75 = 968/75 = 12.91"},
+{q:"3. ถ้าเซลล์ใดมีค่า Eij < 1 ควรทำอย่างไร?",opts:["ตัดเซลล์นั้นทิ้งไปเลย","ยุบเซลล์นั้นรวมกับเซลล์ข้างเคียงจนกว่า Eij ≥ 1","เปลี่ยนไปใช้ ANOVA แทน","ไม่ต้องทำอะไร ใช้ได้เลย"],ans:1,exp:"เมื่อ Eij < 1 ต้องยุบเซลล์นั้นรวมกับเซลล์ข้างเคียง (รวมทั้ง Oij ด้วย) จนกว่า Eij ≥ 1"},
+{q:"4. หลังยุบเซลล์แล้ว หากพบว่าเซลล์ที่มี 1 ≤ Eij ≤ 5 คิดเป็นมากกว่า 20% ของเซลล์ทั้งหมด ควรทำอย่างไร?",opts:["ใช้ Pearson Chi-Square ได้เลยทันที","ต้องยุบเซลล์ต่อไปอีก","เปลี่ยนไปใช้ Fisher's Exact Test ทันที","หยุดการวิเคราะห์"],ans:1,exp:"ถ้าสัดส่วนเซลล์ที่มี 1≤Eij≤5 เกิน 20% ของเซลล์ทั้งหมด ต้องยุบเซลล์ต่อไปอีกก่อนจะทดสอบ"},
+{q:"5. ในตารางขนาด 2×2 หากมีบางเซลล์ที่ 5 ≤ Eij ≤ 10 ควรใช้วิธีใด?",opts:["Pearson Chi-Square ปกติ","Yate's Correction for Continuity","Fisher's Exact Test เท่านั้น","Levene's test"],ans:1,exp:"เมื่อ 5 ≤ Eij ≤ 10 บางเซลล์ในตาราง 2×2 ให้ใช้ Yate's Correction for Continuity"},
+{q:"6. ในตารางขนาด 2×2 หากมีบางเซลล์ที่ Eij < 5 (ตัวอย่างขนาดเล็ก) ควรใช้วิธีใด?",opts:["Pearson Chi-Square ปกติ","Yate's Correction","Fisher's Exact Test","ไม่ต้องแก้ไขอะไร"],ans:2,exp:"เมื่อมี Eij < 5 บางเซลล์ในตาราง 2×2 แสดงว่าตัวอย่างมีขนาดเล็ก ให้ใช้ Fisher's Exact Test"},
+{q:"7. จากตัวอย่างคุณภาพสินค้า 3 ผลัด ได้ χ²=6.23, df=2, p-value=0.0444 ที่ α=0.05 สรุปว่าอย่างไร?",opts:["ยอมรับ H0 สัดส่วนคุณภาพทุกผลัดเท่ากัน","ปฏิเสธ H0 สัดส่วนคุณภาพของแต่ละผลัดแตกต่างกัน","สรุปไม่ได้เพราะ df น้อยเกินไป","ต้องทำ Yate's Correction ก่อนจึงสรุปได้"],ans:1,exp:"p-value = 0.0444 น้อยกว่า α=0.05 → ปฏิเสธ H0 → สัดส่วนคุณภาพของแต่ละผลัดแตกต่างกัน"}
+];
+
+/* ================= FINAL SET (35 ข้อ ผสมทุกเรื่อง) ================= */
+const setfinal = [
+{q:"1. ANOVA ใช้ทดสอบเปรียบเทียบสิ่งใด?",opts:["ค่าเฉลี่ยของประชากรตั้งแต่ 3 กลุ่มขึ้นไป","สัดส่วนของ 2 ประชากร","ความแปรปรวนของ 2 กลุ่มเท่านั้น","ค่ามัธยฐานของประชากร"],ans:0,exp:"One-way ANOVA ใช้เปรียบเทียบค่าเฉลี่ยของประชากรตั้งแต่ 3 กลุ่มขึ้นไปที่เป็นอิสระกัน"},
+{q:"2. ตัวแปรตามใน ANOVA ต้องมีลักษณะใด?",opts:["เชิงจำแนก (categorical)","เชิงปริมาณ (numeric)","เป็นข้อมูล nominal เท่านั้น","ไม่จำเป็นต้องเป็นตัวเลข"],ans:1,exp:"ตัวแปรตามใน ANOVA ต้องเป็นเชิงปริมาณ เช่น คะแนน น้ำหนัก"},
+{q:"3. ข้อตกลงเบื้องต้นของ ANOVA มีข้อใดบ้าง?",opts:["แจกแจงปรกติ และความแปรปรวนเท่ากัน","แจกแจงปัวซองเท่านั้น","ขนาดตัวอย่างเท่ากันทุกกลุ่มเท่านั้น","ไม่มีข้อตกลงใดๆ"],ans:0,exp:"ข้อตกลง: ตัวอย่างเป็นอิสระกัน, มาจากประชากรที่แจกแจงปรกติ, และมีความแปรปรวนไม่ต่างกัน"},
+{q:"4. สถิติที่ใช้ทดสอบการแจกแจงปรกติเมื่อ n > 50 คือ",opts:["Shapiro-Wilk","Kolmogorov-Smirnov","Levene's test","Chi-square test"],ans:1,exp:"เมื่อ n > 50 ใช้ Kolmogorov-Smirnov, เมื่อ n ≤ 50 ใช้ Shapiro-Wilk"},
+{q:"5. สถิติที่ใช้ทดสอบความแปรปรวนเท่ากันของทุกกลุ่มคือ",opts:["Shapiro-Wilk","Levene's test","Pearson Chi-square","Yate's Correction"],ans:1,exp:"Levene's test ใช้ทดสอบ H0: ความแปรปรวนของทุกกลุ่มเท่ากัน"},
+{q:"6. สมมติฐาน H0 ของ One-way ANOVA (k กลุ่ม) เขียนอย่างไร",opts:["μ1 ≠ μ2 ≠ ... ≠ μk","μ1 = μ2 = ... = μk","σ1 = σ2 = ... = σk","p1 = p2 = ... = pk"],ans:1,exp:"H0: μ1 = μ2 = ... = μk (ค่าเฉลี่ยประชากรทุกกลุ่มเท่ากัน)"},
+{q:"7. ตัวสถิติทดสอบของ ANOVA คือ",opts:["F = MSTr/MSE","t = X̄/s","Z = X̄/σ","χ² = Σ(O-E)²/E"],ans:0,exp:"F = MSTr/MSE ~ f(k-1, n-k)"},
+{q:"8. ถ้ามี k=5 กลุ่ม n=30 ตัวอย่างทั้งหมด df(Treatment) เท่ากับเท่าใด?",opts:["4","24","25","29"],ans:0,exp:"df(Treatment) = k-1 = 5-1 = 4"},
+{q:"9. จากข้อ 8 df(Error) เท่ากับเท่าใด",opts:["4","24","25","29"],ans:2,exp:"df(Error) = n-k = 30-5 = 25"},
+{q:"10. จากข้อ 8 df(Total) เท่ากับเท่าใด",opts:["4","24","25","29"],ans:3,exp:"df(Total) = n-1 = 30-1 = 29"},
+{q:"11. SST มีความสัมพันธ์กับ SSTr และ SSE อย่างไร",opts:["SST = SSTr + SSE","SST = SSTr - SSE","SST = SSTr × SSE","SST และ SSTr, SSE ไม่เกี่ยวข้องกัน"],ans:0,exp:"SST (ผันแปรรวม) = SSTr (ระหว่างกลุ่ม) + SSE (ภายในกลุ่ม)"},
+{q:"12. ถ้า SST=2161.45 และ SSE=462.04 ค่า SSTr เท่ากับเท่าใด",opts:["1699.41","2623.49","462.04","2161.45"],ans:0,exp:"SSTr = SST - SSE = 2161.45 - 462.04 = 1699.41"},
+{q:"13. MSTr คำนวณจากสูตรใด",opts:["SSTr/(k-1)","SSE/(n-k)","SST/(n-1)","SSTr × (k-1)"],ans:0,exp:"MSTr = SSTr/(k-1)"},
+{q:"14. MSE คำนวณจากสูตรใด",opts:["SSTr/(k-1)","SSE/(n-k)","SST/(n-1)","SSE × (n-k)"],ans:1,exp:"MSE = SSE/(n-k)"},
+{q:"15. ถ้า MSTr=566.47 และ MSE=28.80 ค่า F เท่ากับประมาณเท่าใด",opts:["0.05","19.6","595.27","537.67"],ans:1,exp:"F = MSTr/MSE = 566.47/28.80 ≈ 19.6"},
+{q:"16. เกณฑ์การปฏิเสธ H0 ใน ANOVA คือข้อใด",opts:["p-value > α","p-value ≤ α หรือ F ≥ f(α,k-1,n-k)","F ≤ 0","df(Error) มากกว่า df(Treatment) เสมอ"],ans:1,exp:"ปฏิเสธ H0 เมื่อ p-value ≤ α หรือค่า F ที่คำนวณได้ ≥ ค่าวิกฤต f"},
+{q:"17. ผล SPSS ได้ F=12.057, Sig.<.001 ที่ α=0.05 ควรสรุปว่าอย่างไร?",opts:["ยอมรับ H0","ปฏิเสธ H0 มีค่าเฉลี่ยอย่างน้อย 2 กลุ่มต่างกัน","สรุปไม่ได้","ต้องเก็บข้อมูลเพิ่ม"],ans:1,exp:"p-value < .001 น้อยกว่า α=0.05 → ปฏิเสธ H0"},
+{q:"18. หลังปฏิเสธ H0 จาก ANOVA ควรทำขั้นตอนใดต่อ?",opts:["Multiple Comparison (Post-hoc)","Levene's test ซ้ำ","Goodness-of-fit test","ไม่ต้องทำอะไรต่อ"],ans:0,exp:"ต้องทำ Post-hoc เพื่อดูว่าคู่กลุ่มใดบ้างที่ค่าเฉลี่ยแตกต่างกันจริง"},
+{q:"19. Post-hoc วิธีใดใช้ได้เมื่อขนาดตัวอย่างแต่ละกลุ่มไม่เท่ากัน",opts:["Tukey's HSD","Scheffe","ไม่มีวิธีใดใช้ได้","F-test"],ans:1,exp:"Scheffe ใช้ได้ทั้งกรณีขนาดเท่ากันและไม่เท่ากัน"},
+{q:"20. Post-hoc วิธีใดเหมาะกับกลุ่มตัวอย่างไม่เกิน 5 กลุ่ม",opts:["Bonferroni Test","Tukey's HSD","LSD","Levene's test"],ans:0,exp:"Bonferroni Test เหมาะกับจำนวนกลุ่มตัวอย่างไม่เกิน 5 กลุ่ม"},
+{q:"21. การทดสอบไคสแควร์ใช้กับข้อมูลประเภทใด?",opts:["ข้อมูลเชิงปริมาณต่อเนื่อง","ข้อมูลเชิงคุณภาพในรูปจำนวนนับ","ข้อมูลอนุกรมเวลาเท่านั้น","ข้อมูลที่ไม่มีการแจกแจง"],ans:1,exp:"Chi-square ใช้กับข้อมูลเชิงคุณภาพในรูปจำนวนนับ (count data)"},
+{q:"22. ข้อมูล เพศ (ชาย/หญิง) เป็นข้อมูลสเกลใด?",opts:["Nominal","Ordinal","Interval","Ratio"],ans:0,exp:"เพศไม่มีลำดับ จึงเป็น Nominal Scale"},
+{q:"23. ข้อมูล ระดับความพึงพอใจ (มาก/ปานกลาง/น้อย) เป็นข้อมูลสเกลใด?",opts:["Nominal","Ordinal","Interval","Ratio"],ans:1,exp:"มีการเรียงลำดับ จึงเป็น Ordinal Scale"},
+{q:"24. Test of Independence ใช้ในสถานการณ์ใด?",opts:["กลุ่มตัวอย่างกลุ่มเดียว จำแนกด้วยตัวแปรคุณภาพ 2 ตัว ต้องการดูความสัมพันธ์","ประชากร 2 กลุ่มที่เป็นอิสระกัน เทียบสัดส่วน","กลุ่มตัวอย่างกลุ่มเดียว เทียบกับการแจกแจงทางทฤษฎี","เปรียบเทียบค่าเฉลี่ยของ 3 กลุ่ม"],ans:0,exp:"Test of Independence: กลุ่มตัวอย่างกลุ่มเดียว จำแนกด้วยตัวแปรคุณภาพ 2 ตัว ทดสอบว่าสัมพันธ์กันหรือไม่"},
+{q:"25. Test of Homogeneity ใช้ในสถานการณ์ใด?",opts:["กลุ่มตัวอย่างกลุ่มเดียว จำแนกด้วยตัวแปรคุณภาพ 2 ตัว","ประชากรตั้งแต่ 2 กลุ่มขึ้นไปที่เป็นอิสระกัน เปรียบเทียบสัดส่วนของคุณลักษณะ","ทดสอบค่าเฉลี่ยของ 3 กลุ่มขึ้นไป","ทดสอบความแปรปรวนของประชากร"],ans:1,exp:"Test of Homogeneity: ประชากร ≥2 กลุ่มที่เป็นอิสระกัน ทดสอบว่าสัดส่วนของคุณลักษณะต่างกันหรือไม่"},
+{q:"26. Goodness-of-fit test ใช้ในสถานการณ์ใด?",opts:["ทดสอบความสัมพันธ์ระหว่างตัวแปร 2 ตัว","ทดสอบว่าประชากรกลุ่มเดียวมีการแจกแจงตรงตามที่คาดไว้หรือไม่","ทดสอบค่าเฉลี่ยของหลายกลุ่ม","ทดสอบความแปรปรวนของ 2 กลุ่ม"],ans:1,exp:"Goodness-of-fit ทดสอบว่าการแจกแจงของกลุ่มตัวอย่างกลุ่มเดียวตรงกับที่คาดไว้ (เช่น Poisson) หรือไม่"},
+{q:"27. สูตรความถี่คาดหวัง Eij ในตาราง Contingency คือ",opts:["Eij = Oi. × O.j","Eij = (Oi.)(O.j)/n","Eij = Oi. / O.j","Eij = n / (Oi. × O.j)"],ans:1,exp:"Eij = (ผลรวมแถว i)(ผลรวมคอลัมน์ j)/n"},
+{q:"28. df ของตาราง Contingency ขนาด 3×2 เท่ากับเท่าใด",opts:["1","2","3","6"],ans:1,exp:"df=(r-1)(c-1)=(3-1)(2-1)=2"},
+{q:"29. df ของ Goodness-of-fit test เมื่อมี k=6 กลุ่ม และประมาณค่าพารามิเตอร์ 1 ตัว (m=1) เท่ากับเท่าใด",opts:["4","5","6","7"],ans:1,exp:"df = k-1-m = 6-1-1 = 4... ตรวจสอบ: 6-1-1=4"},
+{q:"30. ถ้าเซลล์ใดมีค่า Eij < 1 ควรทำอย่างไร",opts:["ตัดทิ้งไปเลย","ยุบรวมกับเซลล์ข้างเคียงจนกว่า Eij ≥ 1","เปลี่ยนไปใช้ ANOVA","ไม่ต้องทำอะไร"],ans:1,exp:"ต้องยุบเซลล์ที่ Eij<1 รวมกับเซลล์ข้างเคียง (รวม Oij ด้วย) จนกว่า Eij ≥ 1"},
+{q:"31. หลังยุบเซลล์แล้ว หากเซลล์ที่มี 1≤Eij≤5 เกิน 20% ของเซลล์ทั้งหมด ควรทำอย่างไร",opts:["ใช้ Pearson Chi-square ได้เลย","ยุบเซลล์ต่อไปอีก","ใช้ ANOVA แทน","หยุดวิเคราะห์ทันที"],ans:1,exp:"ถ้าเกิน 20% ต้องยุบเซลล์ต่อไปอีกก่อนทดสอบ"},
+{q:"32. ตาราง 2×2 ที่มีบางเซลล์ 5≤Eij≤10 ควรใช้วิธีใด",opts:["Pearson Chi-square ปกติ","Yate's Correction for Continuity","Fisher's Exact Test","ANOVA"],ans:1,exp:"5≤Eij≤10 บางเซลล์ในตาราง 2×2 ใช้ Yate's Correction"},
+{q:"33. ตาราง 2×2 ที่มีบางเซลล์ Eij<5 (ตัวอย่างเล็ก) ควรใช้วิธีใด",opts:["Pearson Chi-square ปกติ","Yate's Correction","Fisher's Exact Test","Levene's test"],ans:2,exp:"เมื่อมี Eij<5 บางเซลล์ในตาราง 2×2 ให้ใช้ Fisher's Exact Test"},
+{q:"34. จากตัวอย่างเพศ×ภาวะผู้นำ ได้ χ²=0.67 (Yate's), df=1, p-value=0.413 ที่ α=0.05 สรุปว่าอย่างไร",opts:["ปฏิเสธ H0 มีความสัมพันธ์กัน","ยอมรับ H0 ไม่มีความสัมพันธ์กัน","สรุปไม่ได้","ต้องยุบเซลล์เพิ่ม"],ans:1,exp:"p-value=0.413 มากกว่า α=0.05 → ยอมรับ H0 → เพศและภาวะผู้นำไม่มีความสัมพันธ์กัน"},
+{q:"35. จากตัวอย่างคุณภาพสินค้า 3 ผลัด ได้ χ²=6.23, df=2, p-value=0.0444 ที่ α=0.05 สรุปว่าอย่างไร",opts:["ยอมรับ H0 สัดส่วนคุณภาพทุกผลัดเท่ากัน","ปฏิเสธ H0 สัดส่วนคุณภาพแตกต่างกันอย่างน้อย 2 ผลัด","สรุปไม่ได้เพราะ df น้อย","ต้องใช้ Fisher's Exact Test แทน"],ans:1,exp:"p-value=0.0444 น้อยกว่า α=0.05 → ปฏิเสธ H0 → สัดส่วนคุณภาพของแต่ละผลัดแตกต่างกัน"}
+];
+
+/* ---------- RENDER ---------- */
+function renderQuiz(containerId, data, prefix){
+  const container = document.getElementById(containerId);
+  data.forEach((item, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'quiz-q';
+    div.dataset.correct = item.ans;
+    let optsHtml = '';
+    item.opts.forEach((opt, oi)=>{
+      optsHtml += `<button type="button" class="opt" data-idx="${oi}">${String.fromCharCode(97+oi)}. ${opt}</button>`;
+    });
+    div.innerHTML = `<div class="qtext">${item.q}</div>${optsHtml}<div class="explain">${item.exp}</div>`;
+    container.appendChild(div);
+  });
+}
+renderQuiz('quiz-set1', set1);
+renderQuiz('quiz-set2', set2);
+renderQuiz('quiz-set3', set3);
+renderQuiz('quiz-set4', set4);
+renderQuiz('quiz-setfinal', setfinal);
+
+document.querySelectorAll('.quiz-q').forEach(qDiv=>{
+  const opts = qDiv.querySelectorAll('.opt');
+  opts.forEach(opt=>{
+    opt.addEventListener('click', ()=>{
+      opts.forEach(o=>o.classList.remove('selected'));
+      opt.classList.add('selected');
+      qDiv.dataset.picked = opt.dataset.idx;
+    });
+  });
+});
+
+function checkSet(containerId, scoreId){
+  const qs = document.querySelectorAll('#'+containerId+' .quiz-q');
+  let correct = 0;
+  qs.forEach(qDiv=>{
+    const opts = qDiv.querySelectorAll('.opt');
+    const correctIdx = qDiv.dataset.correct;
+    const picked = qDiv.dataset.picked;
+    opts.forEach(o=>{
+      if(o.dataset.idx === correctIdx){ o.classList.add('correct'); }
+      else if (o.dataset.idx === picked){ o.classList.add('wrong'); }
+    });
+    if(picked !== undefined && picked === correctIdx) correct++;
+    qDiv.querySelector('.explain').style.display = 'block';
+  });
+  document.getElementById(scoreId).textContent = `คะแนน: ${correct} / ${qs.length}`;
+}
+function resetSet(containerId, scoreId){
+  document.querySelectorAll('#'+containerId+' .quiz-q').forEach(qDiv=>{
+    delete qDiv.dataset.picked;
+    qDiv.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected','correct','wrong'));
+    qDiv.querySelector('.explain').style.display = 'none';
+  });
+  document.getElementById(scoreId).textContent = 'ยังไม่ได้ตรวจ';
+}
+
+document.querySelectorAll('[data-check]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const key = btn.dataset.check;
+    checkSet('quiz-'+key, 'score-'+key);
+  });
+});
+document.querySelectorAll('[data-reset]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const key = btn.dataset.reset;
+    resetSet('quiz-'+key, 'score-'+key);
+  });
+});
+</script>
+</body>
+</html>
